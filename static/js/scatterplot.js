@@ -1,12 +1,14 @@
 let scatterWidth = 500;
 let scatterHeight = 500;
 let scatterMargin = { top: 20, right: 20, bottom: 50, left: 60 };
+
 let scatterSvg = null;
 let xScale = null;
 let yScale = null;
 
-function initScatterplot(pcaData) {
+let brushActive = false;
 
+function initScatterplot(pcaData) {
     let innerWidth = scatterWidth - scatterMargin.left - scatterMargin.right;
     let innerHeight = scatterHeight - scatterMargin.top - scatterMargin.bottom;
 
@@ -16,16 +18,16 @@ function initScatterplot(pcaData) {
         .append("g")
         .attr("transform", `translate(${scatterMargin.left}, ${scatterMargin.top})`);
 
-    // scales
     xScale = d3.scaleLinear()
-        .domain(d3.extent(pcaData, d => d.pc1)).nice()
+        .domain(d3.extent(pcaData, d => d.pc1))
+        .nice()
         .range([0, innerWidth]);
 
     yScale = d3.scaleLinear()
-        .domain(d3.extent(pcaData, d => d.pc2)).nice()
+        .domain(d3.extent(pcaData, d => d.pc2))
+        .nice()
         .range([innerHeight, 0]);
 
-    // axes
     scatterSvg.append("g")
         .attr("transform", `translate(0, ${innerHeight})`)
         .call(d3.axisBottom(xScale));
@@ -33,7 +35,6 @@ function initScatterplot(pcaData) {
     scatterSvg.append("g")
         .call(d3.axisLeft(yScale));
 
-    // axis labels
     scatterSvg.append("text")
         .attr("x", innerWidth / 2)
         .attr("y", innerHeight + 40)
@@ -47,25 +48,112 @@ function initScatterplot(pcaData) {
         .attr("text-anchor", "middle")
         .text("PC2");
 
-    // dots
     scatterSvg.selectAll("circle")
         .data(pcaData, d => d.country)
         .enter()
         .append("circle")
+        .attr("class", d => "scatter-dot country-" + d.code)
         .attr("cx", d => xScale(d.pc1))
         .attr("cy", d => yScale(d.pc2))
         .attr("r", 5)
         .attr("fill", "steelblue")
-        .attr("opacity", 0.8);
+        .attr("opacity", 0.8)
+        .on("mouseover", function(event, d) {
+            d3.select(this)
+                .attr("r", 9)
+                .attr("fill", "red");
 
-    // country labels
-    scatterSvg.selectAll(".country-label")
-        .data(pcaData, d => d.country)
-        .enter()
-        .append("text")
-        .attr("class", "country-label")
-        .attr("x", d => xScale(d.pc1) + 7)
-        .attr("y", d => yScale(d.pc2) + 4)
-        .style("font-size", "9px")
-        .text(d => d.country);
+            d3.select(".map-country.country-" + d.code)
+                .attr("stroke-width", 2)
+                .attr("stroke", "red")
+                .attr("fill", "red");
+        })
+        .on("mouseout", function(event, d) {
+            if(!brushActive) {
+                d3.select(this)
+                    .attr("r", 5)
+                    .attr("fill", "steelblue");
+
+                resetMapCountry(d.code);
+            }
+        });
+
+    const brush = d3.brush()
+        .extent([[0, 0], [innerWidth, innerHeight]])
+        .on("end", brushed);
+
+    scatterSvg.append("g")
+        .attr("class", "brush")
+        .call(brush);
+        
+    scatterSvg.selectAll(".scatter-dot").raise();
+
+    function brushed(event) {
+        if (!event.selection) {
+            brushActive = false;
+            selectedCountries = [];
+            selectedCountry = null;
+
+            d3.selectAll(".scatter-dot")
+                .attr("fill", "steelblue")
+                .attr("r", 5);
+            
+            d3.selectAll(".map-country")
+                .attr("stroke", "black")
+                .attr("stroke-width", 0.5); 
+
+            updateMap();
+            updateLineplot();
+
+            return;
+        }
+        
+        brushActive = true;
+
+        const [[x0, y0], [x1, y1]] = event.selection;
+
+        selectedCountries = pcaData
+            .filter(d => {
+                const x = xScale(d.pc1);
+                const y = yScale(d.pc2);
+
+                return x0 <= x && x <= x1 &&
+                       y0 <= y && y <= y1;
+            })
+            .map(d => d.country);
+
+        updateLineplot();
+
+        scatterSvg.selectAll(".scatter-dot")
+            .attr("fill", function(d) {
+                const x = xScale(d.pc1);
+                const y = yScale(d.pc2);
+
+                const selected =
+                    x0 <= x && x <= x1 &&
+                    y0 <= y && y <= y1;
+
+                if (selected) {
+                    d3.select(".map-country.country-" + d.code)
+                        .attr("stroke", "red")
+                        .attr("stroke-width", 2)
+                        .attr("fill", "red");
+
+                    return "red";
+                }
+
+                resetMapCountry(d.code);
+                return "steelblue";
+            })
+            .attr("r", function(d) {
+                const x = xScale(d.pc1);
+                const y = yScale(d.pc2);
+
+                const selected =
+                    x0 <= x && x <= x1 &&
+                    y0 <= y && y <= y1;
+
+                return selected ? 8 : 5;
+            });
+    }
 }

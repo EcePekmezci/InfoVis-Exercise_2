@@ -33,7 +33,6 @@ div.tooltip {
 
 path.line {
   fill: none;
-  stroke: midnightblue;
   stroke-width: 3px;
 }
 
@@ -88,9 +87,31 @@ text.title {
 }
 
 .svg_line_plot {
-    float:left; align-content: center;
-    height: 500px; width: 71.2%;
-    margin-top:0px; margin-bottom: 10px; margin-left:5px; padding-top: 0; padding-bottom: 0; padding-left:3%;
-    box-shadow: rgba(0, 0, 0, 0.05) 0 0 0 1px, rgb(209, 213, 219) 0 0 0 1px inset;
-    opacity: 0.0; font-size: large;
+    float: left;
+    align-content: center;
+    height: 500px;
+    width: 71.2%;
+    margin-top: 0;
+    margin-bottom: 10px;
+    margin-left: 5px;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 3%;
+    box-shadow: rgba(0, 0, 0, 0.05) 0 0 0 1px,
+                rgb(209, 213, 219) 0 0 0 1px inset;
+    opacity: 1.0;
+    font-size: large;
+}
+
+.year_container {
+    display: inline-block;
+    margin-left: 20px;
+    padding: 6px 12px;
+    border: 1px solid rgb(209, 213, 219);
+    background: white;
+}
+
+#year_slider {
+    width: 300px;
+    vertical-align: middle;
 }

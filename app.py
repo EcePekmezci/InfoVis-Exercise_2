@@ -61,6 +61,7 @@ def index():
     pca_data = [
         {
             "country": country,
+            "code": str(df_recent.loc[country, "Country Code"]),
             "pc1": float(coords[i, 0]),
             "pc2": float(coords[i, 1])
         }

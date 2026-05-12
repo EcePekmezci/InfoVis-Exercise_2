@@ -40,6 +40,8 @@ function getColorScale() {
 function initMap() {
     const indicators = getIndicators();
     const dropdown = d3.select("#indicator_change");
+    const slider = d3.select("#year_slider");
+    const yearLabel = d3.select("#year_label");
 
     dropdown.selectAll("option")
         .data(indicators)
@@ -52,6 +54,22 @@ function initMap() {
     dropdown.on("change", function() {
         selectedIndicator = this.value;
         updateMap();
+        updateLineplot();
+        
+    });
+    
+    slider.on("input", function() {
+
+        selectedYear = +this.value;
+
+        yearLabel.text(selectedYear);
+
+        updateMap();
+
+        if (selectedCountry) {
+            updateLineplot();
+        }
+    
     });
 
     d3.json("../static/data/world-topo.json").then(function(countries) {
@@ -72,6 +90,7 @@ function initMap() {
             .selectAll("path")
             .data(mapData)
             .enter().append("path")
+            .attr("class", d => "map-country country-" + d.properties.id)
             .attr("d", path)
             .attr("stroke", "black")
             .attr("stroke-width", 0.5)
@@ -86,6 +105,9 @@ function initMap() {
         // Hover events
         map.on("mouseover", function(event, d) {
                 const code = d.properties.id;
+                d3.select(".scatter-dot.country-" + code)
+    		    .attr("r", 9)
+    		    .attr("fill", "red");
                 const name = d.properties.admin;
                 const yearData = data.filter(r => r["year"] === selectedYear);
                 const row = yearData.find(r => r["Country Code"] === code);
@@ -130,8 +152,23 @@ function initMap() {
                     .attr("stroke-width", 0.5)
                     .attr("stroke", "black")
                     .attr("fill", (val != null && !isNaN(val)) ? colorScale(val) : "white");
+                    
+                d3.select(".scatter-dot.country-" + code)
+    		    .attr("r", 5)
+                    .attr("fill", "steelblue");
 
                 tooltip.style("opacity", 0);
+            });
+            
+            map.on("click", function(event, d) {
+		const code = d.properties.id;
+		const row = data.find(r => r["Country Code"] === code);
+		
+		console.log("Clicked:", code, row);
+
+		if (row) {
+		    selectCountry(row["Country Name"]);
+		}
             });
 
         updateMap();
@@ -143,7 +180,7 @@ function updateMap() {
 
     const valueByCode = {};
     yearData.forEach(d => {
-        valueByCode[d["Country Code"]] = d[selectedIndicator];
+        valueByCode[String(d["Country Code"])] = d[selectedIndicator];
     });
 
     const colorScale = getColorScale();
@@ -154,4 +191,16 @@ function updateMap() {
         if (val == null || isNaN(val)) return "white";
         return colorScale(val);
     });
+}
+
+function resetMapCountry(code) {
+    const yearData = data.filter(r => r["year"] === selectedYear);
+    const row = yearData.find(r => r["Country Code"] === code);
+    const val = row ? row[selectedIndicator] : null;
+    const colorScale = getColorScale();
+
+    d3.select(".map-country.country-" + code)
+        .attr("stroke-width", 0.5)
+        .attr("stroke", "black")
+        .attr("fill", (val != null && !isNaN(val)) ? colorScale(val) : "white");
 }

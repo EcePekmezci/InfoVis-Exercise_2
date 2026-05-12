@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.0/topojson.min.js"></script>
     <script src="{{url_for('static',filename='js/map.js')}}"></script>
     <script src="{{url_for('static',filename='js/scatterplot.js')}}"></script>
+    <script src="{{url_for('static',filename='js/lineplot.js')}}"></script>
 
 </head>
 <body>
@@ -28,9 +29,25 @@
     </div>
 </div>
 
-    <div id = "dropdown_div" class="dd_container">
+<div id="dropdown_div" class="dd_container">
     <label>Indicator:</label>
-        <select id="indicator_change" class="dropdown"></select></div>
+    <select id="indicator_change" class="dropdown"></select>
+
+    <span class="year_container">
+        <label>Year:</label>
+        <span id="year_label">2020</span>
+        <input
+            type="range"
+            id="year_slider"
+            min="1960"
+            max="2020"
+            value="2020"
+            step="1"
+        >
+    </span>
+</div>
+        
+      
 <div id="svg_line_plot" class="svg_line_plot">
 
 </div>
@@ -40,11 +57,26 @@
     let data = {{ data | safe }};
     let pcaData = {{ pca_data | safe }};
     let explained = {{ explained | safe }};
+    let selectedCountries = [];
+    
+    let selectedCountry = null;
+
+    function selectCountry(countryName) {
+       selectedCountry = countryName;
+       updateLineplot();
+    }
+    
+    
     console.log("PCA sample:", pcaData[0]);
     console.log("Explained variance:", explained);
     initMap();
     initScatterplot(pcaData);
+    initLineplot();
 </script>
+
+
+
+
 
 </body>
 </html>
