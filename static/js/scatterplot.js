@@ -56,7 +56,7 @@ function initScatterplot(pcaData) {
         .attr("cx", d => xScale(d.pc1))
         .attr("cy", d => yScale(d.pc2))
         .attr("r", 5)
-        .attr("fill", "steelblue")
+        .attr("fill", d => getCountryColor(d.code))
         .attr("opacity", 0.8)
         .on("mouseover", function(event, d) {
             d3.select(this)
@@ -69,10 +69,11 @@ function initScatterplot(pcaData) {
                 .attr("fill", "red");
         })
         .on("mouseout", function(event, d) {
-            if(!brushActive) {
+            if (!brushActive) {
                 d3.select(this)
                     .attr("r", 5)
-                    .attr("fill", "steelblue");
+                    .attr("fill", getCountryColor(d.code));
+                    
 
                 resetMapCountry(d.code);
             }
@@ -85,7 +86,7 @@ function initScatterplot(pcaData) {
     scatterSvg.append("g")
         .attr("class", "brush")
         .call(brush);
-        
+
     scatterSvg.selectAll(".scatter-dot").raise();
 
     function brushed(event) {
@@ -95,19 +96,19 @@ function initScatterplot(pcaData) {
             selectedCountry = null;
 
             d3.selectAll(".scatter-dot")
-                .attr("fill", "steelblue")
+                .attr("fill", d => getCountryColor(d.code))
                 .attr("r", 5);
-            
+
             d3.selectAll(".map-country")
                 .attr("stroke", "black")
-                .attr("stroke-width", 0.5); 
+                .attr("stroke-width", 0.5);
 
             updateMap();
             updateLineplot();
 
             return;
         }
-        
+
         brushActive = true;
 
         const [[x0, y0], [x1, y1]] = event.selection;
@@ -143,7 +144,7 @@ function initScatterplot(pcaData) {
                 }
 
                 resetMapCountry(d.code);
-                return "steelblue";
+                return getCountryColor(d.code);
             })
             .attr("r", function(d) {
                 const x = xScale(d.pc1);
@@ -156,4 +157,11 @@ function initScatterplot(pcaData) {
                 return selected ? 8 : 5;
             });
     }
+}
+
+function updateScatterplotColors() {
+    if (brushActive) return;
+
+    d3.selectAll(".scatter-dot")
+        .attr("fill", d => getCountryColor(d.code));
 }

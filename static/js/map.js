@@ -34,7 +34,7 @@ function getColorScale() {
 
     return d3.scaleSequential()
         .domain([d3.min(values), d3.max(values)])
-        .interpolator(d3.interpolateYlGn);
+        .interpolator(t => d3.interpolateYlGn(0.35 + 0.65 * t));
 }
 
 function initMap() {
@@ -54,6 +54,7 @@ function initMap() {
     dropdown.on("change", function() {
         selectedIndicator = this.value;
         updateMap();
+        updateScatterplotColors();
         updateLineplot();
         
     });
@@ -65,6 +66,7 @@ function initMap() {
         yearLabel.text(selectedYear);
 
         updateMap();
+        updateScatterplotColors();
 
         if (selectedCountry) {
             updateLineplot();
@@ -172,6 +174,7 @@ function initMap() {
             });
 
         updateMap();
+        updateScatterplotColors();
     });
 }
 
@@ -203,4 +206,13 @@ function resetMapCountry(code) {
         .attr("stroke-width", 0.5)
         .attr("stroke", "black")
         .attr("fill", (val != null && !isNaN(val)) ? colorScale(val) : "white");
+}
+
+function getCountryColor(code) {
+    const yearData = data.filter(r => +r["year"] === selectedYear);
+    const row = yearData.find(r => String(r["Country Code"]) === String(code));
+    const val = row ? row[selectedIndicator] : null;
+    const colorScale = getColorScale();
+
+    return (val != null && !isNaN(val)) ? colorScale(val) : "white";
 }
